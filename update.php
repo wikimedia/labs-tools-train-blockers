@@ -25,7 +25,7 @@
 
 include __DIR__ . '/utils.php';
 
-const TB_TRAIN_SCHEDULE_REGEX = "/{{#invoke:Deployment schedule\|row\n    \|when=([A-Z0-9 -:]+)\n    \|length=[0-9]+\n    \|window=([^\n]+)\n    \|who=[^\n]+\n    \|what=[^\n]+\n{{DeployOneWeekMini\|([0-9a-z.]+-wmf.[0-9]+)->[^\n]+\n[^\n]+\n\* '''Blockers: {{phabricator\|(T[0-9]+)/i";
+const TB_TRAIN_SCHEDULE_REGEX = "/{{#invoke:Deployment schedule\|row\n    \|when=([A-Z0-9 -:]+)\n    (?:\|length=[0-9]+\n    )?\|window=([^\n]+)\n    \|who=[^\n]+\n    \|what=[^\n]+\n{{DeployOneWeekMini\|([0-9a-z.]+-wmf.[0-9]+)->[^\n]+\n[^\n]+\n\* '''Blockers: {{phabricator\|(T[0-9]+)/i";
 const TB_WIKITECH_BASE = 'https://wikitech.wikimedia.org';
 const TB_WIKITECH_API_URL = '/w/api.php?action=parse&format=json&page=Deployments&prop=wikitext';
 

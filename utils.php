@@ -26,13 +26,9 @@
 $settings = require __DIR__ . '/settings.php';
 
 const TB_TABLE_NAME = 'train_blockers';
-const TB_TUESDAY = 2;
 
 function tbGetTargetDate() {
-    $dateTime = new DateTime;
-    $currentDateOfWeek = intval($dateTime->format('w'));
-    $dateTime->modify((TB_TUESDAY - $currentDateOfWeek) . ' days');
-    return $dateTime->format('Y-m-d');
+    return date('Y-m-d', strtotime('tuesday this week'));
 }
 
 function tbGetSqlConnection() {
