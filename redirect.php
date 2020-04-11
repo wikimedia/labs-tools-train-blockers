@@ -23,11 +23,14 @@
  * SOFTWARE.
  */
 
+error_reporting(0);
 include __DIR__ . '/utils.php';
+
+$commit = '';
+$errorMessage = 'No error message was found. I have no idea what is going on.';
 
 try {
     $taskId = '';
-
     $date = tbGetTargetDate();
     $connection = tbGetSqlConnection();
     $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date = ? limit 1;');
@@ -42,6 +45,8 @@ try {
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $taskId = $row['task_id'];
+    } else {
+        $errorMessage = 'No row for current week found from database.';
     }
 
     $result->close();
@@ -49,10 +54,15 @@ try {
     $connection->close();
 
     if ($taskId) {
-        header('Location: https://phabricator.wikimedia.org/' . $taskId);
-        die();
+        if (strlen($taskId) > 0) {
+            header('Location: https://phabricator.wikimedia.org/' . $taskId);
+            die();
+        }
+
+        $taskId = 'Despite our attempts, no task for this week could not be found.';
     }
 } catch (Exception $exception) {
+    $errorMessage = $exception->getMessage();
     error_log($exception);
 }
 
@@ -60,9 +70,29 @@ try {
 
 <html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.4.0/css/bootstrap.css">
         <title>train-blockers task not found</title>
     </head>
     <body>
-        A task for this week could not be found. Try again later or contact <a href="https://en.wikipedia.org/wiki/User talk:Majavah">User:Majavah</a>.
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="/">train-blockers</a>
+        </div>
+    </nav>
+
+
+    <div class="container mt-3">
+        <p>
+            <?= $errorMessage ?>
+        </p>
+
+        <hr/>
+        <a href="https://gerrit.wikimedia.org/r/plugins/gitiles/labs/tools/train-blockers">train-blockers</a>,
+        a tool by <a href="https://en.wikipedia.org/wiki/User:Majavah" class="text-muted">Majavah</a>.
+    </div>
+
     </body>
 </html>
