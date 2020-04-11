@@ -45,6 +45,10 @@ try {
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $taskId = $row['task_id'];
+
+        if (!$taskId) {
+            $errorMessage = 'Despite our attempts, no task for this week could not be found.';
+        }
     } else {
         $errorMessage = 'No row for current week found from database.';
     }
@@ -54,12 +58,8 @@ try {
     $connection->close();
 
     if ($taskId) {
-        if (strlen($taskId) > 0) {
-            header('Location: https://phabricator.wikimedia.org/' . $taskId);
-            die();
-        }
-
-        $taskId = 'Despite our attempts, no task for this week could not be found.';
+        header('Location: https://phabricator.wikimedia.org/' . $taskId);
+        die();
     }
 } catch (Exception $exception) {
     $errorMessage = $exception->getMessage();
