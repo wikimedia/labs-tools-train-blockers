@@ -25,7 +25,7 @@
 
 include __DIR__ . '/utils.php';
 
-const TB_TRAIN_SCHEDULE_REGEX = "/{{#invoke:Deployment schedule\|row\n    \|when=([A-Z0-9 -:]+)\n    (?:\|length=[0-9]+\n    )?\|window=([^\n]+)\n    \|who=[^\n]+\n    \|what=[^\n]+\n{{DeployOneWeekMini\|([0-9a-z.]+-wmf.[0-9]+)->[^\n]+\n[^\n]+\n\* '''Blockers: {{phabricator\|(T[0-9]+)/i";
+const TB_TRAIN_SCHEDULE_REGEX = "/{{#invoke:Deployment schedule\|row\n    \|when=([A-Z0-9 -:]+)\n    (?:\|length=[0-9]+\n    )?\|window=([^\n]+)\n    \|who=[^\n]+\n    \|what=[^\n]+\n{{DeployOneWeekMini\|[0-9a-z.]+-wmf.[0-9]+->([0-9a-z.]+-wmf.[0-9]+)[^\n]+\n[^\n]+\n\* '''Blockers: {{phabricator\|(T[0-9]+)/i";
 const TB_WIKITECH_BASE = 'https://wikitech.wikimedia.org';
 const TB_WIKITECH_API_URL = '/w/api.php?action=parse&format=json&page=Deployments&prop=wikitext';
 
@@ -37,24 +37,27 @@ function tbGetScheduleFromWikitech() {
 
 function tbGetData($targetDate) {
     $wikitext = tbGetScheduleFromWikitech();
+    $found = [
+        $targetDate => [
+            'date' => $targetDate,
+            'version' => null,
+            'task' => null,
+        ],
+    ];
 
     if (preg_match_all(TB_TRAIN_SCHEDULE_REGEX, $wikitext, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $match) {
-            if (substr($match[1], 0, 10) === $targetDate) {
-                return [
-                    'date' => $targetDate,
-                    'version' => $match[3],
-                    'task' => $match[4],
-                ];
-            }
+            $date = substr($match[1], 0, 10);
+            $found[$date] = [
+                'date' => $date,
+                'version' => $match[3],
+                'task' => $match[4],
+            ];
+            var_dump($found[$date]);
         }
     }
 
-    return [
-        'date' => $targetDate,
-        'version' => null,
-        'task' => null,
-    ];
+    return $found;
 }
 
 function tbUpdate() {
@@ -65,11 +68,14 @@ function tbUpdate() {
     var_dump($data);
 
     $statement = $connection->prepare('insert into ' . TB_TABLE_NAME . ' (date, version, task_id) values (?, ?, ?) on duplicate key update version = ?, task_id = ?;');
-    $statement->bind_param('sssss', $data['date'], $data['version'], $data['task'], $data['version'], $data['task']);
-    $statement->execute();
 
-    if ($statement->error) {
-        throw new RuntimeException("Failed to insert data: $statement->error");
+    foreach (array_values($data) as $entry) {
+        $statement->bind_param('sssss', $entry['date'], $entry['version'], $entry['task'], $entry['version'], $entry['task']);
+        $statement->execute();
+
+        if ($statement->error) {
+            throw new RuntimeException("Failed to insert data: $statement->error");
+        }
     }
 
     $statement->close();
