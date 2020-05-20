@@ -47,7 +47,7 @@ try {
         $taskId = $row['task_id'];
 
         if (!$taskId) {
-            $errorMessage = 'Despite our attempts, no task for this week could not be found.';
+            $errorMessage = 'Despite our attempts, no task for this week could be found.';
         }
     } else {
         $errorMessage = 'No row for current week found from database.';
