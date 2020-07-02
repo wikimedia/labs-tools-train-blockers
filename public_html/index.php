@@ -23,12 +23,21 @@
  * SOFTWARE.
  */
 
-return [
-    'db_hostname' => 'localhost',
-    'db_username' => 'train_blockers',
-    'db_password' => '',
-    'db_database' => 'train_blockers',
+error_reporting(0);
+include __DIR__ . '/../utils.php';
 
-    'phab_base_url' => 'https://phabricator.wikimedia.org',
-    'phab_form' => '3',
-];
+$errorMessage = 'No error message was found. I have no idea what is going on.';
+
+try {
+    $taskId = tbGetCurrentBlockerId();
+
+    if ($taskId) {
+        header('Location: https://phabricator.wikimedia.org/' . $taskId);
+        die();
+    }
+} catch (Exception $exception) {
+    $errorMessage = $exception->getMessage();
+    error_log($exception);
+}
+
+require __DIR__ . '/error.php';

@@ -24,52 +24,27 @@
  */
 
 error_reporting(0);
-include __DIR__ . '/utils.php';
+
+include __DIR__ . '/../utils.php';
+$settings = require __DIR__ . '/../settings.php';
+
+$errorMessage = 'No error message was found. I have no idea what is going on.';
 
 try {
-    $date = tbGetTargetDate();
-    $connection = tbGetSqlConnection();
-    $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date >= ? order by date asc limit 6;');
-    $statement->bind_param('s', $date);
-    $statement->execute();
+    $taskId = tbGetCurrentBlockerId();
 
-    if ($statement->error) {
-        throw new RuntimeException("Failed to retrieve data: $statement->error");
+    if ($taskId) {
+        $query = http_build_query([
+            'parent' => $taskId,
+            'priority' => 'unbreak',
+        ]);
+
+        header('Location: ' . $settings['phab_base_url'] . '/maniphest/task/edit/form/' . $settings['phab_form'] . '?' . $query);
+        die();
     }
-
-    $rows = [];
-
-    $result = $statement->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $rows[$row['date']] = $row;
-    }
-
-    $result->close();
-    $statement->close();
-    $connection->close();
-
-    $data = [
-        'dated' => $rows,
-        'current' => null,
-        'created_by' => 'https://en.wikipedia.org/wiki/User:Majavah',
-    ];
-
-    if (array_key_exists($date, $rows)) {
-        $data['current'] = $rows[$date];
-    }
-
-    header('Content-Type: application/json');
-    echo json_encode($data);
-    die();
 } catch (Exception $exception) {
     $errorMessage = $exception->getMessage();
     error_log($exception);
-
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'error' => $errorMessage,
-    ]);
-
-    die();
 }
+
+require __DIR__ . '/error.php';

@@ -23,34 +23,13 @@
  * SOFTWARE.
  */
 
-$settings = require __DIR__ . '/settings.php';
+error_reporting(0);
+include __DIR__ . '/../utils.php';
 
-const TB_TABLE_NAME = 'train_blockers';
-
-function tbGetTargetDate() {
-    return date('Y-m-d', strtotime('tuesday this week'));
-}
-
-function tbGetSqlConnection() {
-    global $settings;
-
-    $connection = new mysqli($settings['db_hostname'], $settings['db_username'], $settings['db_password'], $settings['db_database']);
-
-    if ($connection->connect_error) {
-        throw new RuntimeException("Connection failed: " . $connection->connect_error);
-    }
-
-    return $connection;
-}
-
-/**
- * @return string
- * @throws Exception
- */
-function tbGetCurrentBlockerId() {
+try {
     $date = tbGetTargetDate();
     $connection = tbGetSqlConnection();
-    $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date = ? limit 1;');
+    $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date >= ? order by date asc limit 6;');
     $statement->bind_param('s', $date);
     $statement->execute();
 
@@ -58,21 +37,39 @@ function tbGetCurrentBlockerId() {
         throw new RuntimeException("Failed to retrieve data: $statement->error");
     }
 
-    $result = $statement->get_result();
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $taskId = $row['task_id'];
+    $rows = [];
 
-        if (!$taskId) {
-            throw new Exception('Despite our attempts, no task for this week could be found.');
-        }
-    } else {
-        throw new Exception('No row for current week found from database.');
+    $result = $statement->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $rows[$row['date']] = $row;
     }
 
     $result->close();
     $statement->close();
     $connection->close();
 
-    return $taskId;
+    $data = [
+        'dated' => $rows,
+        'current' => null,
+        'created_by' => 'https://en.wikipedia.org/wiki/User:Majavah',
+    ];
+
+    if (array_key_exists($date, $rows)) {
+        $data['current'] = $rows[$date];
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    die();
+} catch (Exception $exception) {
+    $errorMessage = $exception->getMessage();
+    error_log($exception);
+
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => $errorMessage,
+    ]);
+
+    die();
 }
