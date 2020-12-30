@@ -23,8 +23,13 @@
  */
 
 create table train_blockers (
-    `date` date unique not null,
+    `date` date primary key not null,
     `version` varchar(16),
     `task_id` varchar(16),
     `updated_at` datetime default current_timestamp on update current_timestamp
+);
+
+create table train_blockers_hit_counter (
+    `date` date primary key not null,
+    `hits` int not null
 );

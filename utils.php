@@ -31,6 +31,9 @@ function tbGetTargetDate() {
     return date('Y-m-d', strtotime('tuesday this week'));
 }
 
+/**
+ * @return mysqli
+ */
 function tbGetSqlConnection() {
     global $settings;
 
@@ -44,12 +47,12 @@ function tbGetSqlConnection() {
 }
 
 /**
+ * @param $connection mysqli
  * @return string
  * @throws Exception
  */
-function tbGetCurrentBlockerId() {
+function tbGetCurrentBlockerId( $connection ) {
     $date = tbGetTargetDate();
-    $connection = tbGetSqlConnection();
     $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date = ? limit 1;');
     $statement->bind_param('s', $date);
     $statement->execute();
@@ -64,7 +67,7 @@ function tbGetCurrentBlockerId() {
         $taskId = $row['task_id'];
 
         if (!$taskId) {
-            throw new Exception('Despite our attempts, no task for this week could be found.');
+            throw new Exception('No tasks found for this week.');
         }
     } else {
         throw new Exception('No row for current week found from database.');
@@ -75,4 +78,11 @@ function tbGetCurrentBlockerId() {
     $connection->close();
 
     return $taskId;
+}
+
+/**
+ * @param $connection mysqli
+ */
+function tbRecordHit( $connection ) {
+    $connection->query( 'insert into train_blockers_hit_counter (date, hits) values (current_date(), 1) on duplicate key update hits = hits + 1' );
 }

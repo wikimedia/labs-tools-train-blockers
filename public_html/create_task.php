@@ -31,7 +31,9 @@ $settings = require __DIR__ . '/../settings.php';
 $errorMessage = 'No error message was found. I have no idea what is going on.';
 
 try {
-    $taskId = tbGetCurrentBlockerId();
+    $connection = tbGetSqlConnection();
+    $taskId = tbGetCurrentBlockerId( $connection );
+    $connection->close();
 
     if ($taskId) {
         $query = http_build_query([

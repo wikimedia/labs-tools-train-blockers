@@ -53,7 +53,6 @@ function tbGetData($targetDate) {
                 'version' => $match[3],
                 'task' => $match[4],
             ];
-            var_dump($found[$date]);
         }
     }
 
@@ -65,7 +64,7 @@ function tbUpdate() {
     $data = tbGetData($date);
     $connection = tbGetSqlConnection();
 
-    var_dump($data);
+    echo json_encode($data);
 
     $statement = $connection->prepare('insert into ' . TB_TABLE_NAME . ' (date, version, task_id) values (?, ?, ?) on duplicate key update version = ?, task_id = ?;');
 

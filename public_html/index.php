@@ -29,7 +29,10 @@ include __DIR__ . '/../utils.php';
 $errorMessage = 'No error message was found. I have no idea what is going on.';
 
 try {
-    $taskId = tbGetCurrentBlockerId();
+    $connection = tbGetSqlConnection();
+    $taskId = tbGetCurrentBlockerId( $connection );
+    tbRecordHit( $connection );
+    $connection->close();
 
     if ($taskId) {
         header('Location: https://phabricator.wikimedia.org/' . $taskId);
