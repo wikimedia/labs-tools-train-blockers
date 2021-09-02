@@ -51,7 +51,6 @@ try {
     $data = [
         'dated' => $rows,
         'current' => null,
-        'created_by' => 'https://en.wikipedia.org/wiki/User:Majavah',
     ];
 
     if (array_key_exists($date, $rows)) {
