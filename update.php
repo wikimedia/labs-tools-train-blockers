@@ -37,13 +37,7 @@ function tbGetScheduleFromWikitech() {
 
 function tbGetData($targetDate) {
     $wikitext = tbGetScheduleFromWikitech();
-    $found = [
-        $targetDate => [
-            'date' => $targetDate,
-            'version' => null,
-            'task' => null,
-        ],
-    ];
+    $found = [];
 
     if (preg_match_all(TB_TRAIN_SCHEDULE_REGEX, $wikitext, $matches, PREG_SET_ORDER)) {
         foreach ($matches as $match) {
