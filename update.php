@@ -25,37 +25,39 @@
 
 include __DIR__ . '/utils.php';
 
-const TB_TRAIN_SCHEDULE_REGEX = "/{{(?:#invoke:Deployment schedule\|row|Deployment calendar event card)\n    \|when=([A-Z0-9 -:]+)\n    (?:\|length=[0-9]+\n    )?\|window=([^\n]+)\n    \|who=[^\n]+\n    \|what=[^\n]+\n{{DeployOneWeekMini\|[0-9a-z.]+-wmf.[0-9]+->([0-9a-z.]+-wmf.[0-9]+)[^\n]+\n[^\n]+\n\* '''Blockers: {{phabricator\|(T[0-9]+)/i";
-const TB_WIKITECH_BASE = 'https://wikitech.wikimedia.org';
-const TB_WIKITECH_API_URL = '/w/api.php?action=parse&format=json&page=Deployments&prop=wikitext';
+function tbGetScheduleFromPhabricator() {
+    global $settings;
 
-function tbGetScheduleFromWikitech() {
-    $star = '*';
-    return json_decode(file_get_contents(TB_WIKITECH_BASE . TB_WIKITECH_API_URL))
-        ->parse->wikitext->$star;
+    $url = $settings['phab_base_url'] . "/api/maniphest.search"
+         . "?api.token=" . $settings['phab_api_token']
+         . "&constraints[subtypes][0]=release&constraints[projects][0]=train&order=custom.release.date";
+
+    return json_decode(file_get_contents($url))->result->data;
 }
 
-function tbGetData($targetDate) {
-    $wikitext = tbGetScheduleFromWikitech();
+function tbGetDataFromPhabricator() {
+    $records = tbGetScheduleFromPhabricator();
     $found = [];
+    $release_date_field = "custom.release.date";
+    $version_field = "custom.release.version";
 
-    if (preg_match_all(TB_TRAIN_SCHEDULE_REGEX, $wikitext, $matches, PREG_SET_ORDER)) {
-        foreach ($matches as $match) {
-            $date = substr($match[1], 0, 10);
-            $found[$date] = [
-                'date' => $date,
-                'version' => $match[3],
-                'task' => $match[4],
-            ];
-        }
+    foreach ($records as $record) {
+        # custom.release.date is always Monday 00:00 UTC.
+        # The train-blockers service has always used the following Tuesday, so convert here.
+        $date = gmdate('Y-m-d', strtotime('Tuesday this week', $record->fields->$release_date_field));
+
+        $found[$date] = [
+            'date' => $date,
+            'version' => $record->fields->$version_field,
+            'task' => "T" . $record->id,
+        ];
     }
 
     return $found;
 }
 
 function tbUpdate() {
-    $date = tbGetTargetDate();
-    $data = tbGetData($date);
+    $data = tbGetDataFromPhabricator();
     $connection = tbGetSqlConnection();
 
     echo json_encode($data);
