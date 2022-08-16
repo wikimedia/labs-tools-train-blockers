@@ -50,6 +50,7 @@ function tbGetDataFromPhabricator() {
             'date' => $date,
             'version' => $record->fields->$version_field,
             'task' => "T" . $record->id,
+            'status' => $record->fields->status->value,
         ];
     }
 
@@ -62,10 +63,11 @@ function tbUpdate() {
 
     echo json_encode($data);
 
-    $statement = $connection->prepare('insert into ' . TB_TABLE_NAME . ' (date, version, task_id) values (?, ?, ?) on duplicate key update version = ?, task_id = ?;');
+    $statement = $connection->prepare('insert into ' . TB_TABLE_NAME . ' (date, version, task_id, status) values (?, ?, ?, ?) on duplicate key update version = ?, task_id = ?, status = ?;');
 
     foreach (array_values($data) as $entry) {
-        $statement->bind_param('sssss', $entry['date'], $entry['version'], $entry['task'], $entry['version'], $entry['task']);
+        $statement->bind_param('sssssss', $entry['date'], $entry['version'], $entry['task'], $entry['status'],
+                               $entry['version'], $entry['task'], $entry['status']);
         $statement->execute();
 
         if ($statement->error) {

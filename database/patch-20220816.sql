@@ -22,15 +22,8 @@
  * SOFTWARE.
  */
 
-create table train_blockers (
-    `date` date primary key not null,
-    `version` varchar(16),
-    `task_id` varchar(16),
-    `status` varchar(16),
-    `updated_at` datetime default current_timestamp on update current_timestamp
-);
+-- Patch 2022-08-16
+-- Add 'status' column
 
-create table train_blockers_hit_counter (
-    `date` date primary key not null,
-    `hits` int not null
-);
+alter table train_blockers
+    add column `status` varchar(16) after task_id;
