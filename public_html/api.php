@@ -29,7 +29,7 @@ include __DIR__ . '/../utils.php';
 try {
     $date = tbGetTargetDate();
     $connection = tbGetSqlConnection();
-    $statement = $connection->prepare('select date, version, task_id, updated_at from ' . TB_TABLE_NAME . ' where date >= ? order by date asc limit 6;');
+    $statement = $connection->prepare('select date, version, task_id, status, updated_at from ' . TB_TABLE_NAME . ' where date >= ? order by date asc limit 6;');
     $statement->bind_param('s', $date);
     $statement->execute();
 
