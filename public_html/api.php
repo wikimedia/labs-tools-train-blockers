@@ -26,6 +26,8 @@
 error_reporting(0);
 include __DIR__ . '/../utils.php';
 
+header('Access-Control-Allow-Origin: *');
+
 try {
     $date = tbGetTargetDate();
     $connection = tbGetSqlConnection();
