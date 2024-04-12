@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-FileCopyrightText: 2024 Taavi Väänänen <hi@taavi.wtf>
+- command: php tool-train-blockers/update.php
+  emails: onfailure
+  image: php8.2
+  name: update-train-blockers
+  schedule: 22 */3 * * *
